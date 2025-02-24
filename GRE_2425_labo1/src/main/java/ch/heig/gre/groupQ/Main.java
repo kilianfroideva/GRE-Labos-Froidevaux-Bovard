@@ -1,4 +1,4 @@
-package ch.heig.gre.groupX;
+package ch.heig.gre.groupQ;
 
 import ch.heig.gre.gui.MainViewController;
 import javafx.application.Application;
