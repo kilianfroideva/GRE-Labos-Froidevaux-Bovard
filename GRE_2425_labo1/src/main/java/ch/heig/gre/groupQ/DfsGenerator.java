@@ -1,38 +1,57 @@
 package ch.heig.gre.groupQ;
 
+import ch.heig.gre.graph.Edge;
 import ch.heig.gre.maze.MazeBuilder;
 import ch.heig.gre.maze.MazeGenerator;
+import ch.heig.gre.maze.Progression;
 
-import java.util.Stack;
-import java.util.Random;
+import java.util.*;
 
 // TODO: renommer le package (Shift + F6) selon la lettre attribuée à votre groupe
 
 
 public final class DfsGenerator implements MazeGenerator {
 
-  /*
-  private void BFS_Init()
+  private void DFS(MazeBuilder builder, int from) {
+    int size = builder.topology().nbVertices();
+    boolean[] discovered = new boolean[size];
+    Stack<int[]> stack = new Stack<>();
 
-  private void BFS(MazeBuilder builder, int from, Stack<Integer> beingTreated){
-    Stack<Integer> beingTreated = new Stack<>();
-    beingTreated.add(from);
+    stack.push(new int[]{from, -1});
 
-    Random rand = new Random();
-    int next = builder.topology().neighbors(from).get(rand.nextInt(builder.topology().neighbors(from).size()));
+    while (!stack.isEmpty()) {
+      int[] pair = stack.pop();
+      int current = pair[0];
+      int parent = pair[1];
 
-    builder.removeWall(from,next);
+      builder.progressions().setLabel(current, Progression.PROCESSING);
 
-    BFS()
+      if (!discovered[current]) {
+        discovered[current] = true;
 
+        if (parent != -1) {
+          builder.removeWall(current, parent);
+        }
+
+        List<Integer> neighbors = builder.topology().neighbors(current);
+        Collections.shuffle(neighbors);
+
+        for (Integer neighbor : neighbors) {
+          if (!discovered[neighbor]) {
+            stack.push(new int[]{neighbor, current});
+            builder.progressions().setLabel(neighbor, Progression.PENDING);
+          }
+        }
+      }
+
+      builder.progressions().setLabel(current, Progression.PROCESSED);
+    }
   }
-
-  */
 
   @Override
   public void generate(MazeBuilder builder, int from) {
-    //choose a random neighbor from from to continue BFS, erase the wall and continue.
 
+    DFS(builder, from);
     //throw new UnsupportedOperationException("Not implemented yet");
   }
 
