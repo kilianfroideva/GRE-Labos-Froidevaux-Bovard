@@ -2,43 +2,60 @@ package ch.heig.gre.groupQ;
 
 import ch.heig.gre.maze.MazeBuilder;
 import ch.heig.gre.maze.MazeGenerator;
+import ch.heig.gre.maze.Progression;
 
-import java.util.Stack;
-import java.util.Random;
+import java.util.*;
 
 // TODO: renommer le package (Shift + F6) selon la lettre attribuée à votre groupe
 
 
 public final class DfsGenerator implements MazeGenerator {
 
-  /*
-  private void BFS_Init()
-
-  private void BFS(MazeBuilder builder, int from, Stack<Integer> beingTreated){
-    Stack<Integer> beingTreated = new Stack<>();
-    beingTreated.add(from);
-
-    Random rand = new Random();
-    int next = builder.topology().neighbors(from).get(rand.nextInt(builder.topology().neighbors(from).size()));
-
-    builder.removeWall(from,next);
-
-    BFS()
-
-  }
-
-  */
-
   @Override
   public void generate(MazeBuilder builder, int from) {
-    //choose a random neighbor from from to continue BFS, erase the wall and continue.
+    //Initialize
+    Set<Integer> visited = new HashSet<>();
+    Stack<Integer> dfsStack = new Stack<>();
 
-    //throw new UnsupportedOperationException("Not implemented yet");
+    // Start from from
+    dfsStack.push(from);
+    visited.add(from);
+    builder.progressions().setLabel(from, Progression.PROCESSING);
+
+    // DFS loop
+    while (!dfsStack.isEmpty()) {
+      int current = dfsStack.peek();
+      List<Integer> neighbors = builder.topology().neighbors(current);
+      Collections.shuffle(neighbors);
+      boolean foundUnvisitedNeighbor = false;
+      for (int neighbor : neighbors) {
+        // Check all neighbors and remove walls
+        if (!visited.contains(neighbor)) {
+          builder.progressions().setLabel(neighbor, Progression.PENDING);
+          builder.removeWall(current, neighbor);
+
+          dfsStack.push(neighbor);
+          visited.add(neighbor);
+          builder.progressions().setLabel(neighbor, Progression.PROCESSING);
+
+          foundUnvisitedNeighbor = true;
+          break;
+        }
+      }
+
+      // If no unvisited neighbor, mark as processed
+      if (!foundUnvisitedNeighbor) {
+        builder.progressions().setLabel(current, Progression.PROCESSED);
+        dfsStack.pop();
+
+      }
+    }
   }
+
 
   @Override
   public boolean requireWalls() {
     return true;
-    //throw new UnsupportedOperationException("Not implemented yet");
   }
+
 }
