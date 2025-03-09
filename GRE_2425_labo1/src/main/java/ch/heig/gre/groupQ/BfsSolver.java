@@ -52,7 +52,6 @@ public final class BfsSolver implements MazeSolver {
         solutions.add(source);
         Collections.reverse(solutions);
 
-        System.out.println("Solved with " + numberTreated + " vertices");
         return solutions;
     }
 }
