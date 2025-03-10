@@ -24,7 +24,7 @@ public final class DfsGenerator implements MazeGenerator {
       int current = pair[0];
       int parent = pair[1];
 
-      builder.progressions().setLabel(current, Progression.PROCESSING);
+      builder.progressions().setLabel(current, Progression.PROCESSED);
 
       if (!discovered[current]) {
         discovered[current] = true;
@@ -39,12 +39,10 @@ public final class DfsGenerator implements MazeGenerator {
         for (Integer neighbor : neighbors) {
           if (!discovered[neighbor]) {
             stack.push(new int[]{neighbor, current});
-            builder.progressions().setLabel(neighbor, Progression.PENDING);
+            builder.progressions().setLabel(neighbor, Progression.PROCESSING);
           }
         }
       }
-
-      builder.progressions().setLabel(current, Progression.PROCESSED);
     }
   }
 
