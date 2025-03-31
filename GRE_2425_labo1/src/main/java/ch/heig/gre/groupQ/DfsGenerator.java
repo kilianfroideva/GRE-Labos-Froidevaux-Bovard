@@ -11,53 +11,122 @@ import java.util.*;
 
 
 public final class DfsGenerator implements MazeGenerator {
-
-  private void DFS(MazeBuilder builder, int from) {
+  /**
+   * Performs a depth-first search traversal starting from a given vertex.
+   * Builds a maze by removing walls between vertices as they are discovered.
+   *
+   * @param builder The maze builder containing topology and progression information
+   * @param from The starting vertex for the DFS traversal
+   */
+  private void DFS_neigbors(MazeBuilder builder, int from) {
     int size = builder.topology().nbVertices();
-    boolean[] discovered = new boolean[size];
-    Stack<int[]> stack = new Stack<>();
 
-    stack.push(new int[]{from, -1});
+    // Use of BitSet for better memory complexity (a boolean array is equivalent as an int array)
+    BitSet discovered = new BitSet(size);
+    Stack<Integer> vertexStack = new Stack<>();
 
-    while (!stack.isEmpty()) {
-      int[] pair = stack.pop();
-      int current = pair[0];
-      int parent = pair[1];
+    // Parent serves only to remove wall between current and parent if we "jump" while backtracking the DFS
+    Stack<Integer> parentStack = new Stack<>();
 
-      builder.progressions().setLabel(current, Progression.PROCESSING);
+    // Push initial vertex
+    vertexStack.push(from);
+    parentStack.push(-1);
+    builder.progressions().setLabel(from, Progression.PROCESSING);
 
-      if (!discovered[current]) {
-        discovered[current] = true;
+    while (!vertexStack.isEmpty()) {
+      int current = vertexStack.pop();
+      int parent = parentStack.pop();
 
-        if (parent != -1) {
-          builder.removeWall(current, parent);
+      // If pop from the stack, the vertice is being processed
+      builder.progressions().setLabel(current, Progression.PROCESSED);
+
+      // If already discovered, skip processing (could be case if a vertex is pushed to time in the stack and the one on top, the last one, was already processed)
+      if (discovered.get(current)) {continue;}
+
+      // current vertex was always NOT discovered before from here
+      // Mark as discovered
+      discovered.set(current);
+
+      // Remove wall between current and parent
+      if (parent != -1) {
+        builder.removeWall(current, parent);
+      }
+
+      // Shuffle the neighbors to walk randomly in the labyrinth
+      List<Integer> neighbors = builder.topology().neighbors(current);
+      Collections.shuffle(neighbors);
+
+      // For each neighbor being not discovered, push into the stack and apply the tag will be discovered
+      for (Integer neighbor : neighbors) {
+        if (!discovered.get(neighbor)) {
+          vertexStack.push(neighbor);
+          parentStack.push(current);
+          builder.progressions().setLabel(neighbor, Progression.PROCESSING);
         }
+      }
+    }
+  }
 
-        List<Integer> neighbors = builder.topology().neighbors(current);
-        Collections.shuffle(neighbors);
 
-        for (Integer neighbor : neighbors) {
-          if (!discovered[neighbor]) {
-            stack.push(new int[]{neighbor, current});
-            builder.progressions().setLabel(neighbor, Progression.PENDING);
-          }
+  private void DFS_backtrack(MazeBuilder builder, int from) {
+    // Note that the use of Set isnt optimal for time complexity
+
+    //Initialize
+    Set<Integer> visited = new HashSet<>();
+    Stack<Integer> dfsStack = new Stack<>();
+
+    // Start from from
+    dfsStack.push(from);
+    visited.add(from);
+    builder.progressions().setLabel(from, Progression.PROCESSING);
+
+    // DFS loop
+    while (!dfsStack.isEmpty()) {
+      int current = dfsStack.peek();
+      List<Integer> neighbors = builder.topology().neighbors(current);
+      Collections.shuffle(neighbors);
+      boolean foundUnvisitedNeighbor = false;
+      for (int neighbor : neighbors) {
+        // Check all neighbors and remove walls
+        if (!visited.contains(neighbor)) {
+          builder.progressions().setLabel(neighbor, Progression.PENDING);
+          builder.removeWall(current, neighbor);
+
+          dfsStack.push(neighbor);
+          visited.add(neighbor);
+          builder.progressions().setLabel(neighbor, Progression.PROCESSING);
+
+          foundUnvisitedNeighbor = true;
+          break;
         }
       }
 
-      builder.progressions().setLabel(current, Progression.PROCESSED);
+      // If no unvisited neighbor, mark as processed
+      if (!foundUnvisitedNeighbor) {
+        builder.progressions().setLabel(current, Progression.PROCESSED);
+        dfsStack.pop();
+
+      }
     }
   }
+
 
   @Override
   public void generate(MazeBuilder builder, int from) {
 
-    DFS(builder, from);
-    //throw new UnsupportedOperationException("Not implemented yet");
+    // Choose which algorithm to use
+    boolean DFS_neighbor_algorithm = true;
+
+    if(DFS_neighbor_algorithm) {
+      DFS_neigbors(builder, from);
+    } else {
+      DFS_backtrack(builder, from);
+    }
   }
 
   @Override
   public boolean requireWalls() {
+    // Walls everywhere as default
     return true;
-    //throw new UnsupportedOperationException("Not implemented yet");
   }
 }

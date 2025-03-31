@@ -1,1 +1,0 @@
-# GRE-Labos-GrQ
